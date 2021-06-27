@@ -14,6 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+
+<p align="left">
+    <br>
+    Added average pooling considering attention_mask instead of selecting CLS token for sequence classification in BERT, ALBERT, XLNet, and ELECTRA.
+    <br>
+<p>
+    
+```python
+>>> ! pip install sentencepiece
+>>> ! git clone https://mohsenfayyaz/transformers.git
+>>> ! pip install -e ./transformers
+
+>>> from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+>>> tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+>>> model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased")
+
+>>> inputs = tokenizer("Hello world!", return_tensors="pt")
+>>> outputs = model(**inputs)
+```
+
 <p align="center">
     <br>
     <img src="https://raw.githubusercontent.com/huggingface/transformers/master/docs/source/imgs/transformers_logo_name.png" width="400"/>
