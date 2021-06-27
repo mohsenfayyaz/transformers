@@ -624,7 +624,8 @@ ALBERT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
+# MOHSEN
+from ..mohsen_pooler import get_pooling_module
 @add_start_docstrings(
     "The bare ALBERT Model transformer outputting raw hidden-states without any specific head on top.",
     ALBERT_START_DOCSTRING,
@@ -641,6 +642,10 @@ class AlbertModel(AlbertPreTrainedModel):
         self.config = config
         self.embeddings = AlbertEmbeddings(config)
         self.encoder = AlbertTransformer(config)
+
+        # MOHSEN AVG POOLER
+        self.mohsen_avg_pooler = get_pooling_module(method="avg")
+
         if add_pooling_layer:
             self.pooler = nn.Linear(config.hidden_size, config.hidden_size)
             self.pooler_activation = nn.Tanh()
@@ -739,7 +744,10 @@ class AlbertModel(AlbertPreTrainedModel):
 
         sequence_output = encoder_outputs[0]
 
-        pooled_output = self.pooler_activation(self.pooler(sequence_output[:, 0])) if self.pooler is not None else None
+        # MOHSEN
+        pooled_output = self.mohsen_avg_pooler(sequence_output, attention_mask)
+        pooled_output = self.pooler_activation(self.pooler(pooled_output)) if self.pooler is not None else None
+        # pooled_output = self.pooler_activation(self.pooler(sequence_output[:, 0])) if self.pooler is not None else None
 
         if not return_dict:
             return (sequence_output, pooled_output) + encoder_outputs[1:]
