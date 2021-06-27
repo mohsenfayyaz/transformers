@@ -630,7 +630,10 @@ class BertPooler(nn.Module):
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
         # to the first token.
-        first_token_tensor = hidden_states[:, 0]
+
+        # MOHSEN
+        # first_token_tensor = hidden_states[:, 0]
+        first_token_tensor = hidden_states
         pooled_output = self.dense(first_token_tensor)
         pooled_output = self.activation(pooled_output)
         return pooled_output
@@ -834,7 +837,8 @@ BERT_INPUTS_DOCSTRING = r"""
             Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
 """
 
-
+# MOHSEN
+from ..mohsen_pooler import get_pooling_module
 @add_start_docstrings(
     "The bare Bert Model transformer outputting raw hidden-states without any specific head on top.",
     BERT_START_DOCSTRING,
@@ -859,6 +863,9 @@ class BertModel(BertPreTrainedModel):
 
         self.embeddings = BertEmbeddings(config)
         self.encoder = BertEncoder(config)
+
+        # MOHSEN AVG POOLER
+        self.mohsen_avg_pooler = get_pooling_module(method="avg")
 
         self.pooler = BertPooler(config) if add_pooling_layer else None
 
@@ -1001,7 +1008,8 @@ class BertModel(BertPreTrainedModel):
             return_dict=return_dict,
         )
         sequence_output = encoder_outputs[0]
-        pooled_output = self.pooler(sequence_output) if self.pooler is not None else None
+        pooled_output = self.mohsen_avg_pooler(sequence_output, attention_mask)
+        pooled_output = self.pooler(pooled_output) if self.pooler is not None else None
 
         if not return_dict:
             return (sequence_output, pooled_output) + encoder_outputs[1:]
