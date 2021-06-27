@@ -1476,6 +1476,8 @@ class XLNetLMHeadModel(XLNetPreTrainedModel):
         return [layer_past.index_select(1, beam_idx.to(layer_past.device)) for layer_past in mems]
 
 
+# MOHSEN
+from ..mohsen_pooler import get_pooling_module
 @add_start_docstrings(
     """
     XLNet Model with a sequence classification/regression head on top (a linear layer on top of the pooled output) e.g.
@@ -1490,6 +1492,10 @@ class XLNetForSequenceClassification(XLNetPreTrainedModel):
         self.config = config
 
         self.transformer = XLNetModel(config)
+
+        # MOHSEN AVG POOLER
+        self.mohsen_avg_pooler = get_pooling_module(method="avg")
+
         self.sequence_summary = SequenceSummary(config)
         self.logits_proj = nn.Linear(config.d_model, config.num_labels)
 
@@ -1546,7 +1552,11 @@ class XLNetForSequenceClassification(XLNetPreTrainedModel):
         )
         output = transformer_outputs[0]
 
-        output = self.sequence_summary(output)
+        #MOHSEN
+        pooled_output = self.mohsen_avg_pooler(output, attention_mask)
+        output = self.sequence_summary(pooled_output.unsqueeze(dim=1))
+        # output = self.sequence_summary(output)
+
         logits = self.logits_proj(output)
 
         loss = None
