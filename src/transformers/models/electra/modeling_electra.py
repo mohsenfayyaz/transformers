@@ -904,7 +904,10 @@ class ElectraClassificationHead(nn.Module):
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
 
     def forward(self, features, **kwargs):
-        x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
+        # MOHSEN
+        # x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
+        x = features
+
         x = self.dropout(x)
         x = self.dense(x)
         x = get_activation("gelu")(x)  # although BERT uses tanh here, it seems Electra authors used gelu here
@@ -913,6 +916,8 @@ class ElectraClassificationHead(nn.Module):
         return x
 
 
+# MOHSEN
+from ..mohsen_pooler import get_pooling_module
 @add_start_docstrings(
     """
     ELECTRA Model transformer with a sequence classification/regression head on top (a linear layer on top of the
@@ -926,6 +931,9 @@ class ElectraForSequenceClassification(ElectraPreTrainedModel):
         self.num_labels = config.num_labels
         self.config = config
         self.electra = ElectraModel(config)
+
+        # MOHSEN AVG POOLER
+        self.mohsen_avg_pooler = get_pooling_module(method="avg")
         self.classifier = ElectraClassificationHead(config)
 
         self.init_weights()
@@ -970,8 +978,12 @@ class ElectraForSequenceClassification(ElectraPreTrainedModel):
             return_dict,
         )
 
+        
         sequence_output = discriminator_hidden_states[0]
-        logits = self.classifier(sequence_output)
+        # MOHSEN
+        pooled_output = self.mohsen_avg_pooler(sequence_output, attention_mask)
+        logits = self.classifier(pooled_output)
+        # logits = self.classifier(sequence_output)
 
         loss = None
         if labels is not None:
